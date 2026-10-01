@@ -62,6 +62,8 @@ import com.wanderpage.app.container
 import com.wanderpage.app.data.model.ElementPayload
 import com.wanderpage.app.ui.theme.LocalReducedMotion
 import kotlin.math.roundToInt
+import com.google.mlkit.common.MlKitException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private sealed interface CutOutStage {
@@ -94,6 +96,7 @@ fun CutOutFlow(
     // 0 while choosing; runs to 1 as the subject lifts off and the photo falls away.
     val peel = remember { Animatable(0f) }
     var finishing by remember { mutableStateOf(false) }
+    var downloading by remember { mutableStateOf(false) }
 
     BackHandler(onBack = onCancel)
 
@@ -103,16 +106,29 @@ fun CutOutFlow(
             stage = CutOutStage.Failed(R.string.cutout_none)
             return@LaunchedEffect
         }
-        stage = try {
-            val pieces = CutOutEngine.findSubjects(photo)
-            if (pieces.isEmpty()) {
-                CutOutStage.Failed(R.string.cutout_none)
-            } else {
-                kept = pieces.indices.toSet()
-                CutOutStage.Choose(photo, pieces)
+        // The first cut-out on a phone has to wait for Google Play services to fetch the model, so keep
+        // trying for about a minute before giving up.
+        var attempt = 0
+        while (stage is CutOutStage.Working) {
+            stage = try {
+                val pieces = CutOutEngine.findSubjects(photo)
+                if (pieces.isEmpty()) {
+                    CutOutStage.Failed(R.string.cutout_none)
+                } else {
+                    kept = pieces.indices.toSet()
+                    CutOutStage.Choose(photo, pieces)
+                }
+            } catch (e: MlKitException) {
+                if (e.errorCode == MlKitException.UNAVAILABLE && attempt++ < 20) {
+                    downloading = true
+                    delay(3_000)
+                    CutOutStage.Working
+                } else {
+                    CutOutStage.Failed(R.string.cutout_unavailable)
+                }
+            } catch (e: Exception) {
+                CutOutStage.Failed(R.string.cutout_unavailable)
             }
-        } catch (e: Exception) {
-            CutOutStage.Failed(R.string.cutout_unavailable)
         }
     }
     val choosing = stage as? CutOutStage.Choose
@@ -172,7 +188,11 @@ fun CutOutFlow(
                 CutOutStage.Working -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = DeskInk)
                     Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.cutout_working), color = DeskInk)
+                    Text(
+                        stringResource(if (downloading) R.string.cutout_downloading else R.string.cutout_working),
+                        color = DeskInk,
+                        textAlign = TextAlign.Center,
+                    )
                 }
                 is CutOutStage.Failed -> Text(stringResource(current.messageRes), color = DeskInk, textAlign = TextAlign.Center)
                 is CutOutStage.Choose -> {

@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -41,15 +42,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -94,6 +100,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wanderpage.app.R
+import com.wanderpage.app.ui.map.DiaryMap
 import com.wanderpage.app.ui.theme.InkSoft
 import com.wanderpage.app.ui.theme.LocalReducedMotion
 import com.wanderpage.app.ui.theme.Wood
@@ -109,6 +116,7 @@ fun HomeScreen(
     onOpenDiary: (Long, Rect?) -> Unit,
     /** The diary that is open as a book. Its cover is hidden on the shelf, since the book view is showing it. */
     openDiaryId: Long?,
+    onSettings: () -> Unit,
     vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val cards by vm.cards.collectAsStateWithLifecycle()
@@ -117,6 +125,7 @@ fun HomeScreen(
     val pendingDelete by vm.pendingDelete.collectAsStateWithLifecycle()
 
     var creating by rememberSaveable { mutableStateOf(false) }
+    var showMap by rememberSaveable { mutableStateOf(false) }
     var renamingId by rememberSaveable { mutableStateOf<Long?>(null) }
     var recoveringId by rememberSaveable { mutableStateOf<Long?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -148,7 +157,11 @@ fun HomeScreen(
 
     Box(Modifier.fillMaxSize().paperBackground()) {
         val shelf = cards
-        if (!shelf.isNullOrEmpty()) {
+        // M-1: the shelf and the map cross-fade.
+        Crossfade(showMap, animationSpec = tween(if (reducedMotion) 0 else 450), label = "home-tab") { map ->
+            if (map) DiaryMap(shelf.orEmpty(), onOpen = onOpenDiary, modifier = Modifier.fillMaxSize())
+        }
+        if (!showMap && !shelf.isNullOrEmpty()) {
             val duplicateTitle = stringResource(R.string.duplicate_title)
             Shelf(
                 cards = shelf,
@@ -207,7 +220,7 @@ fun HomeScreen(
                             )
                         }
                         shelf == null -> Unit
-                        shelf.isEmpty() && pendingDelete == null -> EmptyShelf(onStart = { creating = true }, buttonModifier = morph)
+                        shelf.isEmpty() && pendingDelete == null && !showMap -> EmptyShelf(onStart = { creating = true }, buttonModifier = morph)
                         else -> ExtendedFloatingActionButton(
                             onClick = { creating = true },
                             icon = { Icon(Icons.Default.Add, contentDescription = null) },
@@ -218,6 +231,28 @@ fun HomeScreen(
                         )
                     }
                 }
+            }
+        }
+
+        if (!creating) {
+            Row(
+                Modifier.fillMaxWidth().statusBarsPadding().padding(start = 56.dp, end = 4.dp, top = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SingleChoiceSegmentedButtonRow(Modifier.weight(1f).padding(horizontal = 24.dp)) {
+                    val colours = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.primary,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                        inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                    )
+                    SegmentedButton(!showMap, { showMap = false }, SegmentedButtonDefaults.itemShape(0, 2), colors = colours, icon = {}) {
+                        Text(stringResource(R.string.tab_diaries))
+                    }
+                    SegmentedButton(showMap, { showMap = true }, SegmentedButtonDefaults.itemShape(1, 2), colors = colours, icon = {}) {
+                        Text(stringResource(R.string.tab_map))
+                    }
+                }
+                IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, stringResource(R.string.settings)) }
             }
         }
 
@@ -275,7 +310,7 @@ private fun Shelf(
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     LazyColumn(
         state = listState,
-        contentPadding = PaddingValues(top = insets.calculateTopPadding() + 20.dp, bottom = bottom + 104.dp),
+        contentPadding = PaddingValues(top = insets.calculateTopPadding() + 68.dp, bottom = bottom + 104.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         item(key = "header") {

@@ -107,7 +107,7 @@ import java.io.File
 private enum class Panel { FONT, COLOUR, SIZE, SPACING, STYLE, FRAME, CAPTION, OPACITY, BACKGROUND, TAPE }
 
 /** What a picked or captured picture is for. */
-private enum class PictureUse { PHOTO, CUTOUT, BACKGROUND }
+private enum class PictureUse { PHOTO, CUTOUT, BACKGROUND, RECEIPT }
 
 private val Desk = Brush.verticalGradient(listOf(Color(0xFF55443A), Color(0xFF2F2620)))
 private val DeskInk = Color(0xFFF4EBDD)
@@ -140,6 +140,7 @@ fun EditorScreen(pageId: Long, onDone: () -> Unit) {
             PictureUse.PHOTO -> vm.addPhoto(uri)
             PictureUse.CUTOUT -> cutOutSource = uri
             PictureUse.BACKGROUND -> vm.setBackgroundPhoto(uri)
+            PictureUse.RECEIPT -> vm.addReceipt(uri)
         }
     }
     val pickPicture = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let(::usePicture) }
@@ -173,7 +174,11 @@ fun EditorScreen(pageId: Long, onDone: () -> Unit) {
         val activity = context as? Activity ?: return
         GmsDocumentScanning.getClient(options).getStartScanIntent(activity)
             .addOnSuccessListener { scanReceipt.launch(IntentSenderRequest.Builder(it).build()) }
-            .addOnFailureListener { Toast.makeText(context, R.string.receipt_unavailable, Toast.LENGTH_LONG).show() }
+            .addOnFailureListener {
+                // Without the scanner a receipt can still come from a photo; it just isn't straightened or cropped.
+                Toast.makeText(context, R.string.receipt_unavailable, Toast.LENGTH_LONG).show()
+                fromGallery(PictureUse.RECEIPT)
+            }
     }
 
     fun done() {

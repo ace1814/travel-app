@@ -164,8 +164,11 @@ fun PageOverview(
                             Modifier.fillMaxWidth().paperShadow(strength = 2f).clickable { onOpenPage(index) },
                         )
                         Box(Modifier.align(Alignment.TopEnd)) {
-                            IconButton(onClick = { menuOpen = true }, modifier = Modifier.padding(2.dp).size(32.dp).clip(CircleShape).background(Color(0x66000000))) {
-                                Icon(Icons.Default.MoreVert, stringResource(R.string.page_options), tint = Color.White, modifier = Modifier.size(18.dp))
+                            // A 48 dp touch target around a smaller visible dot.
+                            Box(Modifier.size(48.dp).clip(CircleShape).clickable { menuOpen = true }, contentAlignment = Alignment.Center) {
+                                Box(Modifier.size(30.dp).background(Color(0x73000000), CircleShape), contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.MoreVert, stringResource(R.string.page_options), tint = Color.White, modifier = Modifier.size(18.dp))
+                                }
                             }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                 DropdownMenuItem(

@@ -47,6 +47,9 @@ private enum class CoverTexture { LEATHER, SPECKLE, WEAVE, PLAIN, FILM }
 
 private class CoverLook(val base: Color, val shade: Color, val ink: Color, val texture: CoverTexture)
 
+/** The cover's light, dark and ink colours, for drawing a small cover outside Compose (the map pins). */
+fun CoverStyle.pinColours(): Triple<Color, Color, Color> = look().let { Triple(it.base, it.shade, it.ink) }
+
 /** The cover's main colour, for the board that shows around an open book. */
 fun CoverStyle.boardColour(): Color = look().shade
 

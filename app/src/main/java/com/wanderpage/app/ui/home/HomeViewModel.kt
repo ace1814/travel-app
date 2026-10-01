@@ -44,7 +44,11 @@ data class DiaryCard(
     val primaryName: String,
     val primaryLat: Double,
     val primaryLng: Double,
+    /** Every city of the trip. Each one is a pin on the map. */
+    val places: List<CardPlace>,
 )
+
+data class CardPlace(val name: String, val lat: Double, val lng: Double)
 
 /** Everything the create sheet is holding before the diary exists. */
 data class CreateDraft(
@@ -282,6 +286,7 @@ private fun DiaryWithPlaces.toCard(): DiaryCard {
         primaryName = primary?.name.orEmpty(),
         primaryLat = primary?.lat ?: 0.0,
         primaryLng = primary?.lng ?: 0.0,
+        places = ordered.map { CardPlace(it.name, it.lat, it.lng) },
     )
 }
 
