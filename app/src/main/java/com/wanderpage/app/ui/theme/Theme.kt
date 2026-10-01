@@ -1,5 +1,6 @@
 package com.wanderpage.app.ui.theme
 
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -36,7 +37,12 @@ private val Colors = lightColorScheme(
 
 @Composable
 fun WanderpageTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalReducedMotion provides rememberReducedMotion()) {
-        MaterialTheme(colorScheme = Colors, typography = WanderTypography, content = content)
+    MaterialTheme(colorScheme = Colors, typography = WanderTypography) {
+        // Screens draw their own paper instead of sitting in a Surface, so the ink colour is set here.
+        CompositionLocalProvider(
+            LocalReducedMotion provides rememberReducedMotion(),
+            LocalContentColor provides Ink,
+            content = content,
+        )
     }
 }

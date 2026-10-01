@@ -1,4 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Wanderpage</string>
+
+    <!-- Home shelf -->
+    <string name="shelf_title">My diaries</string>
+    <plurals name="shelf_count">
+        <item quantity="one">%d trip on the shelf</item>
+        <item quantity="other">%d trips on the shelf</item>
+    </plurals>
+    <string name="new_diary">New diary</string>
+    <string name="empty_title">Your shelf is empty</string>
+    <string name="empty_body">Every trip gets its own book. Start one and fill it with notes, photos and tickets.</string>
+    <string name="empty_cta">Start your first diary</string>
+    <string name="cover_description">%1$s diary. Long press for more options.</string>
+    <plurals name="page_count">
+        <item quantity="one">%d page</item>
+        <item quantity="other">%d pages</item>
+    </plurals>
+
+    <!-- Cover menu -->
+    <string name="menu_rename">Rename</string>
+    <string name="menu_change_cover">Change cover</string>
+    <string name="menu_duplicate">Duplicate</string>
+    <string name="menu_delete">Delete</string>
+    <string name="rename_title">Rename diary</string>
+    <string name="change_cover_title">Change cover</string>
+    <string name="duplicate_title">%1$s copy</string>
+    <string name="deleted_message">Deleted “%1$s”</string>
+    <string name="undo">Undo</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+
+    <!-- Create diary -->
+    <string name="create_heading">New diary</string>
+    <string name="close">Close</string>
+    <string name="search_hint">Where did you go?</string>
+    <string name="search_hint_more">Add another city</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_empty">No places found. Check the spelling or your connection.</string>
+    <string name="use_current_location">Use current location</string>
+    <string name="locating">Finding where you are…</string>
+    <string name="location_failed">Couldn\'t find your location. Search for the place instead.</string>
+    <string name="place_remove">Remove %1$s</string>
+    <string name="duplicate_notice">You already have a diary for %1$s.</string>
+    <string name="duplicate_open">Open it</string>
+    <string name="duplicate_new">Start a new trip</string>
+    <string name="title_label">Title</string>
+    <string name="dates_label">Trip dates</string>
+    <string name="dates_optional">Add trip dates (optional)</string>
+    <string name="dates_clear">Clear dates</string>
+    <string name="cover_label">Cover</string>
+    <string name="cover_photo">Photo</string>
+    <string name="cover_leather">Leather</string>
+    <string name="cover_kraft">Kraft</string>
+    <string name="cover_linen">Linen</string>
+    <string name="cover_blush">Blush</string>
+    <string name="cover_sage">Sage</string>
+    <string name="cover_navy">Navy</string>
+    <string name="cover_film">Film</string>
+    <string name="format_label">Page size</string>
+    <string name="format_post">Post</string>
+    <string name="format_square">Square</string>
+    <string name="format_grid">Grid</string>
+    <string name="format_story">Story</string>
+    <string name="create_button">Create diary</string>
+    <string name="cover_preview_title">Your trip</string>
 </resources>

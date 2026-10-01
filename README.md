@@ -8,4 +8,20 @@ An Android travel journal that turns each trip into a scrapbook-style book: curs
 - [`docs/references/`](docs/references/): the visual references the look is based on
 
 ## Status
-PRD done. App development not started yet. The Android Studio project will live in [`app/`](app/) at the repo root once created.
+In development, following the MVP build order in the development notes.
+
+| Step | State |
+|---|---|
+| 1. Project skeleton (theme, Room schema, repository) | Done |
+| 2. Home shelf and create-diary sheet | Done |
+| 3. Book view | Next |
+| 4–9. Page zoom, editor, elements, export, map, polish | Not started |
+
+<img src="docs/screenshots/shelf.png" width="260"> <img src="docs/screenshots/create-diary.png" width="260">
+
+## Build
+The Gradle project is at the repo root, with the app module in [`app/`](app/).
+
+```bash
+./gradlew assembleDebug
+```

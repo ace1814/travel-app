@@ -59,3 +59,21 @@ After each step: build, run on a device or emulator, and check the animations ho
 
 ## Environment note
 The cloud planning session couldn't build Android code because its network policy blocked `dl.google.com` (Google Maven / Android SDK). Development should happen locally in Android Studio, or in a cloud environment that allows `dl.google.com` and `maven.google.com`.
+
+## Progress log
+
+### Steps 1–2 (2 Oct 2026)
+Built and checked on an API 36 emulator: empty shelf, create sheet (search, dates, cover, format), duplicate-location notice, the drop onto the shelf, and the long-press menu (rename, change cover, duplicate, delete with undo).
+
+Decisions made while building:
+- **Versions** match a known-good local setup instead of the newest ones: AGP 8.13.1, Kotlin 2.2.10, Gradle 9.0.0, Compose BOM 2025.11.01, Room 2.8.2, Coil 3.3.0. `compileSdk`/`targetSdk` 36.
+- **Package** is `com.wanderpage.app` (follows the working title; change it before the first Play upload if the name changes).
+- **No Hilt yet.** `AppContainer` in `WanderpageApp.kt` holds the two singletons. Add Hilt when the graph grows.
+- **Element x/y are page units**, per the rendering rule above (the PRD's data-model sketch says 0..1; the rule wins).
+- **Delete with undo** hides the diary and only deletes when the snackbar goes away, so undo never has to rebuild rows.
+- **Room schema export is off** until the first release; turn it on before writing the first migration.
+
+Not done yet from steps 1–2:
+- Bundled fonts. The UI uses the system cursive (Dancing Script) until the `.ttf` files are added.
+- "Use a photo" cover and "Use current location" are implemented but untested (they need the photo picker and a location fix on a device).
+- C-7's "opens to its first blank page" waits for the book view (step 3). Tapping a cover does nothing until then.
