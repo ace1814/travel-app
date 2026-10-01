@@ -105,3 +105,9 @@ data class DiaryWithPlaces(
     @Relation(parentColumn = "id", entityColumn = "diaryId", entity = PageEntity::class, projection = ["id"])
     val pageIds: List<Long>,
 )
+
+data class PageWithElements(
+    @Embedded val page: PageEntity,
+    @Relation(parentColumn = "id", entityColumn = "pageId")
+    val elements: List<ElementEntity>,
+)

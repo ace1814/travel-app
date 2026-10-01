@@ -47,6 +47,9 @@ private enum class CoverTexture { LEATHER, SPECKLE, WEAVE, PLAIN, FILM }
 
 private class CoverLook(val base: Color, val shade: Color, val ink: Color, val texture: CoverTexture)
 
+/** The cover's main colour, for the board that shows around an open book. */
+fun CoverStyle.boardColour(): Color = look().shade
+
 private fun CoverStyle.look(): CoverLook = when (this) {
     CoverStyle.LEATHER -> CoverLook(Color(0xFF7A4330), Color(0xFF4F281A), Color(0xFFEBCB8F), CoverTexture.LEATHER)
     CoverStyle.KRAFT -> CoverLook(Color(0xFFCDAC80), Color(0xFFB08D5E), Color(0xFF3A2A1A), CoverTexture.SPECKLE)
@@ -83,9 +86,11 @@ fun BookCover(
     style: CoverStyle,
     imageUri: String?,
     modifier: Modifier = Modifier,
+    /** False lets the caller size the cover freely, as the book view does while the cover swings open. */
+    lockAspect: Boolean = true,
 ) {
     val look = style.look()
-    BoxWithConstraints(modifier.aspectRatio(COVER_ASPECT)) {
+    BoxWithConstraints(if (lockAspect) modifier.aspectRatio(COVER_ASPECT) else modifier) {
         val unit = maxWidth / 100
         val pages = unit * 3.5f
         Box(

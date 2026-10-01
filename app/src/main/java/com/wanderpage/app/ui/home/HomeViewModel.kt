@@ -11,6 +11,7 @@ import com.wanderpage.app.WanderpageApp
 import com.wanderpage.app.data.DiaryRepository
 import com.wanderpage.app.data.NewDiary
 import com.wanderpage.app.data.NewPlace
+import com.wanderpage.app.data.Settings
 import com.wanderpage.app.data.db.DiaryWithPlaces
 import com.wanderpage.app.data.model.CoverStyle
 import com.wanderpage.app.data.model.PageFormat
@@ -71,6 +72,7 @@ data class CreateDraft(
 class HomeViewModel(
     private val repo: DiaryRepository,
     private val placeSearch: PlaceSearch,
+    private val settings: Settings,
 ) : ViewModel() {
 
     private val _pendingDelete = MutableStateFlow<DiaryCard?>(null)
@@ -84,13 +86,16 @@ class HomeViewModel(
             diaries.filter { it.diary.id != hidden?.id }.map { it.toCard() }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private val _draft = MutableStateFlow(CreateDraft())
+    private val _draft = MutableStateFlow(CreateDraft(format = settings.state.value.defaultFormat))
     val draft: StateFlow<CreateDraft> = _draft.asStateFlow()
 
     private val _justCreated = MutableStateFlow<Long?>(null)
 
     /** The diary that should drop onto the shelf. Cleared once the animation has run. */
     val justCreated: StateFlow<Long?> = _justCreated.asStateFlow()
+
+    /** New diaries that should open once they have landed on the shelf (C-7). Duplicates don't. */
+    private val openAfterDrop = mutableSetOf<Long>()
 
     private val query = MutableStateFlow("")
 
@@ -176,12 +181,17 @@ class HomeViewModel(
                 ),
             )
             if (draft.coverStyle != CoverStyle.PHOTO) repo.discardCoverPhoto(draft.coverPhoto)
+            openAfterDrop += id
             _justCreated.value = id
-            _draft.value = CreateDraft()
+            _draft.value = CreateDraft(format = settings.state.value.defaultFormat)
         }
     }
 
-    fun onDropAnimationDone(id: Long) = _justCreated.compareAndSet(id, null)
+    /** Returns true if the diary should now open. */
+    fun onDropAnimationDone(id: Long): Boolean {
+        _justCreated.compareAndSet(id, null)
+        return openAfterDrop.remove(id)
+    }
 
     /**
      * Fills in what follows from the primary place: the title, and the duplicate check (C-6).
@@ -250,7 +260,7 @@ class HomeViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val container = (this[APPLICATION_KEY] as WanderpageApp).container
-                HomeViewModel(container.diaries, container.places)
+                HomeViewModel(container.diaries, container.places, container.settings)
             }
         }
     }

@@ -42,4 +42,46 @@ interface DiaryDao {
 
     @Query("DELETE FROM diary WHERE id = :id")
     suspend fun deleteDiary(id: Long)
+
+    @Query("SELECT * FROM diary WHERE id = :id")
+    fun observeDiary(id: Long): Flow<DiaryEntity?>
+
+    @Query("SELECT * FROM diary_place WHERE diaryId = :diaryId ORDER BY position")
+    fun observePlaces(diaryId: Long): Flow<List<DiaryPlaceEntity>>
+
+    @Transaction
+    @Query("SELECT * FROM page WHERE diaryId = :diaryId ORDER BY position")
+    fun observePages(diaryId: Long): Flow<List<PageWithElements>>
+
+    @Transaction
+    @Query("SELECT * FROM page WHERE id = :id")
+    suspend fun pageWithElements(id: Long): PageWithElements?
+
+    @Transaction
+    @Query("SELECT * FROM page WHERE diaryId = :diaryId ORDER BY position LIMIT 1")
+    suspend fun firstPage(diaryId: Long): PageWithElements?
+
+    @Query("SELECT * FROM page WHERE id = :id")
+    suspend fun page(id: Long): PageEntity?
+
+    @Update
+    suspend fun updatePage(page: PageEntity)
+
+    @Query("UPDATE page SET position = :position WHERE id = :id")
+    suspend fun setPagePosition(id: Long, position: Int)
+
+    @Query("UPDATE page SET position = position + 1 WHERE diaryId = :diaryId AND position >= :from")
+    suspend fun shiftPages(diaryId: Long, from: Int)
+
+    @Query("SELECT COALESCE(MAX(position), -1) FROM page WHERE diaryId = :diaryId")
+    suspend fun lastPagePosition(diaryId: Long): Int
+
+    @Query("DELETE FROM page WHERE id = :id")
+    suspend fun deletePage(id: Long)
+
+    @Query("DELETE FROM element WHERE pageId = :pageId")
+    suspend fun deleteElements(pageId: Long)
+
+    @Query("UPDATE diary SET updatedAt = :now WHERE id = :id")
+    suspend fun touchDiary(id: Long, now: Long)
 }

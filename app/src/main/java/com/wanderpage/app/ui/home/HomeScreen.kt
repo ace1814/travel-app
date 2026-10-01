@@ -67,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -77,6 +78,8 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -103,7 +106,9 @@ private const val BOOKS_PER_SHELF = 2
 /** Home in shelf view (PRD §6.1) with the create-diary sheet (§6.3). */
 @Composable
 fun HomeScreen(
-    onOpenDiary: (Long) -> Unit,
+    onOpenDiary: (Long, Rect?) -> Unit,
+    /** The diary that is open as a book. Its cover is hidden on the shelf, since the book view is showing it. */
+    openDiaryId: Long?,
     vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val cards by vm.cards.collectAsStateWithLifecycle()
@@ -118,6 +123,9 @@ fun HomeScreen(
     val listState = rememberLazyListState()
     val reducedMotion = LocalReducedMotion.current
     val context = LocalContext.current
+    // Where each cover is on screen, so an opening book can grow out of its own cover.
+    val coverBounds = remember { mutableMapOf<Long, Rect>() }
+    val open: (Long) -> Unit = { id -> onOpenDiary(id, coverBounds[id]) }
 
     LaunchedEffect(pendingDelete?.id) {
         val card = pendingDelete ?: return@LaunchedEffect
@@ -146,12 +154,14 @@ fun HomeScreen(
                 cards = shelf,
                 justCreated = justCreated,
                 listState = listState,
-                onOpen = onOpenDiary,
+                hiddenId = openDiaryId,
+                onBounds = { id, bounds -> coverBounds[id] = bounds },
+                onOpen = open,
                 onRename = { renamingId = it.id },
                 onChangeCover = { recoveringId = it.id },
                 onDuplicate = { vm.duplicate(it.id, duplicateTitle.format(it.title)) },
                 onDelete = vm::requestDelete,
-                onDropDone = vm::onDropAnimationDone,
+                onDropDone = { id -> if (vm.onDropAnimationDone(id)) open(id) },
             )
         }
 
@@ -191,7 +201,7 @@ fun HomeScreen(
                                 },
                                 onOpenExisting = {
                                     creating = false
-                                    onOpenDiary(it)
+                                    open(it)
                                 },
                                 modifier = Modifier.align(Alignment.BottomCenter).statusBarsPadding().padding(top = 24.dp).then(morph),
                             )
@@ -251,6 +261,8 @@ private fun Shelf(
     cards: List<DiaryCard>,
     justCreated: Long?,
     listState: androidx.compose.foundation.lazy.LazyListState,
+    hiddenId: Long?,
+    onBounds: (Long, Rect) -> Unit,
     onOpen: (Long) -> Unit,
     onRename: (DiaryCard) -> Unit,
     onChangeCover: (DiaryCard) -> Unit,
@@ -287,6 +299,8 @@ private fun Shelf(
                         ShelfBook(
                             card = card,
                             isNew = card.id == justCreated,
+                            hidden = card.id == hiddenId,
+                            onBounds = { onBounds(card.id, it) },
                             onOpen = { onOpen(card.id) },
                             onRename = { onRename(card) },
                             onChangeCover = { onChangeCover(card) },
@@ -309,6 +323,8 @@ private fun Shelf(
 private fun ShelfBook(
     card: DiaryCard,
     isNew: Boolean,
+    hidden: Boolean,
+    onBounds: (Rect) -> Unit,
     onOpen: () -> Unit,
     onRename: () -> Unit,
     onChangeCover: () -> Unit,
@@ -343,9 +359,10 @@ private fun ShelfBook(
             style = card.coverStyle,
             imageUri = card.coverImageUri,
             modifier = Modifier
+                .onGloballyPositioned { onBounds(it.boundsInRoot()) }
                 .graphicsLayer {
                     val progress = drop.value
-                    alpha = (progress * 3f).coerceIn(0f, 1f)
+                    alpha = if (hidden) 0f else (progress * 3f).coerceIn(0f, 1f)
                     if (!reducedMotion) {
                         // The spring overshoots past 1; mirroring it keeps the book bouncing on the shelf, not through it.
                         translationY = -abs(1f - progress) * size.height * 0.9f

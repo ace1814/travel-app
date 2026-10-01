@@ -62,5 +62,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.maplibre)
+    implementation(libs.mlkit.subject.segmentation)
+    implementation(libs.mlkit.document.scanner)
     debugImplementation(libs.androidx.ui.tooling)
 }
