@@ -73,7 +73,34 @@ Decisions made while building:
 - **Delete with undo** hides the diary and only deletes when the snackbar goes away, so undo never has to rebuild rows.
 - **Room schema export is off** until the first release; turn it on before writing the first migration.
 
-Not done yet from steps 1–2:
-- Bundled fonts. The UI uses the system cursive (Dancing Script) until the `.ttf` files are added.
-- "Use a photo" cover and "Use current location" are implemented but untested (they need the photo picker and a location fix on a device).
-- C-7's "opens to its first blank page" waits for the book view (step 3). Tapping a cover does nothing until then.
+### Steps 3–9 (2–4 Oct 2026)
+Built and checked on API 34 and API 36 emulators, in the debug build and the minified release build.
+
+How it is put together:
+- **One renderer.** `PageSurface` replaces the density inside a page so that `1.dp` and `1.sp` are one page unit. The book, the zoomed page, the editor and the export all draw through it, so they match.
+- **Export** lays a second, unseen `PageSurface` out at exactly 1080 px wide and records it into a `GraphicsLayer`. It waits for every image on the page to load first.
+- **Editor gestures** are handled in one place on the page and hit-tested by hand, so a two-finger gesture works on the selected element from anywhere.
+- **Autosave** replaces the page's elements in one transaction after every change. Undo keeps 60 steps.
+- **Book** is two `Animatable`s: `open` (cover closed to open, with the cover growing from its place on the shelf) and `position` (which spread, with fractions as a page in mid-turn).
+- **Papers and tapes are drawn, not stored**: 20 papers and 17 tapes as code, sharp at any export size.
+- **MapLibre 11.8.0** (the version in the notes above, 13.6.1, was not tried). The paper map style is `app/src/main/assets/map_style.json`.
+- **Release build** is minified with R8, limited to `arm64-v8a` and `armeabi-v7a`, and signed with the debug key.
+
+Checked by hand: create diary with several cities, cover open and close, page turn, add / duplicate / delete / reorder pages, zoomed page, text with fonts and note styles, photo with frames, tape, papers, photo background with blur, receipt scan through the ML Kit scanner, refine brush, undo, export to the gallery at 1080 × 1350, map pins, clusters and peek cards, settings.
+
+## Known gaps
+
+Simplified against the PRD:
+- **Page turn** is a 3D leaf turning on the gutter, on every Android version. The AGSL page-curl shader for Android 13+ is not built.
+- **Shelf ⇄ map** cross-fades. Covers do not fly to their pins.
+- **Deleting an element** removes it at once; there is no crumple animation. A new pin does not bounce onto the map.
+- **Instagram** is one button that hands the image to the Instagram app, which then offers Story, Feed or Reel. The Stories-only intent needs a Facebook App ID.
+- **Colour picker** is a hue slider next to the ink presets, not a full picker.
+- **No Hilt** and no tests yet.
+- **Files are not cleaned up** when an element or page that used them is deleted.
+
+Not verified:
+- **Cut-outs with the real model.** ML Kit Subject Segmentation crashes with an illegal-instruction fault (SIGILL) inside Google's native library on the arm64 emulator, so it could not run there. The subject picker, the peel, the sticker outline and the refine brush were checked with a stand-in mask. Test on a real phone first.
+- **Camera capture**, **use current location**, **photo covers**, and **sharing to Instagram** (not installed on the emulator).
+- **Frame rate.** Nothing was measured against the 60 fps target; the emulator is not a fair test.
+- **TalkBack.** Controls have labels and 48 dp targets, but no screen-reader pass was done.

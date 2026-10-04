@@ -16,11 +16,19 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        // Phones only. Leaving out the x86 builds of the map library takes about 20 MB off the APK.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Signed with the debug key until there is a real upload key. Fine for sideloading; not for Play.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 

@@ -8,16 +8,10 @@ An Android travel journal that turns each trip into a scrapbook-style book: curs
 - [`docs/references/`](docs/references/): the visual references the look is based on
 
 ## Status
-In development, following the MVP build order in the development notes.
+The MVP build order (steps 1 to 9 in the development notes) is implemented and runs on Android 8 and later.
+See "Known gaps" in [`docs/DEVELOPMENT_NOTES.md`](docs/DEVELOPMENT_NOTES.md) for what is simplified or untested.
 
-| Step | State |
-|---|---|
-| 1. Project skeleton (theme, Room schema, repository) | Done |
-| 2. Home shelf and create-diary sheet | Done |
-| 3. Book view | Next |
-| 4–9. Page zoom, editor, elements, export, map, polish | Not started |
-
-<img src="docs/screenshots/shelf.png" width="260"> <img src="docs/screenshots/create-diary.png" width="260">
+<img src="docs/screenshots/shelf.png" width="200"> <img src="docs/screenshots/book.png" width="200"> <img src="docs/screenshots/editor.png" width="200"> <img src="docs/screenshots/map.png" width="200">
 
 ## Build
 The Gradle project is at the repo root, with the app module in [`app/`](app/).
@@ -25,3 +19,14 @@ The Gradle project is at the repo root, with the app module in [`app/`](app/).
 ```bash
 ./gradlew assembleDebug
 ```
+
+A minified APK for sideloading, signed with the debug key:
+
+```bash
+./gradlew assembleRelease
+```
+
+## Layout
+- `data/`: Room entities and DAO, the repository, image storage, settings
+- `ui/page/`: `PageSurface`, the single page renderer used by the book, editor and export, plus fonts, papers, tapes and shapes
+- `ui/home/`, `ui/book/`, `ui/editor/`, `ui/export/`, `ui/map/`, `ui/settings/`: one folder per screen
